@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id               Int               @id @default(autoincrement())
+  name             String
+  email            String            @unique
+  password         String
+  role             Role              @default(USER)
+  avatar           String?
+  books            Book[]
+  sentRequests     ExchangeRequest[] @relation("SentRequests")
+  receivedRequests ExchangeRequest[] @relation("ReceivedRequests")
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model Book {
+  id               Int               @id @default(autoincrement())
+  name             String
+  author           String
+  photo            String?
+  description      String?
+  ownerId          Int
+  owner            User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  exchangeRequests ExchangeRequest[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+}
+
+model ExchangeRequest {
+  id         Int      @id @default(autoincrement())
+  bookId     Int
+  book       Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  senderId   Int
+  sender     User     @relation("SentRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId Int
+  receiver   User     @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+  status     String   @default("PENDING")
+  createdAt  DateTime @default(now())
+}
+
